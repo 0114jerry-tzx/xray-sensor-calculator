@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<!-- Static single-page dashboard for X-ray sensor parameter visualization. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X-ray Sensor Parameter Calculator</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --text: #172033;
+      --muted: #64748b;
+      --line: #dbe3ee;
+      --accent: #163d73;
+      --accent-light: #e8f0fb;
+      --accent-mid: #3f6fa8;
+      --success: #12726b;
+      --shadow: 0 16px 42px rgba(15, 36, 66, 0.08);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      letter-spacing: 0;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 32px 0 42px;
+    }
+
+    .header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 28px 32px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 6px solid var(--accent);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 760;
+      line-height: 1.05;
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 9px 14px;
+      border: 1px solid #c9d8ea;
+      border-radius: 999px;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 22px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      color: var(--accent);
+      font-size: 21px;
+      line-height: 1.2;
+    }
+
+    .panel-header span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .input-panel {
+      padding-bottom: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 16px;
+      padding: 20px 22px 0;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: #334155;
+      font-size: 15px;
+      font-weight: 760;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--accent-mid);
+      box-shadow: 0 0 0 3px rgba(63, 111, 168, 0.16);
+    }
+
+    .warning {
+      display: none;
+      margin: 8px 0 0;
+      color: #9a3412;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .warning.is-visible {
+      display: block;
+    }
+
+    .result-panel {
+      min-width: 0;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      padding: 20px 22px 22px;
+    }
+
+    .result-card {
+      min-height: 124px;
+      padding: 18px;
+      border: 1px solid #d8e2ef;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    .result-card .label {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 760;
+      text-transform: uppercase;
+    }
+
+    .result-card .value {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      color: var(--accent);
+      font-size: 31px;
+      font-weight: 780;
+      line-height: 1;
+      word-break: break-word;
+    }
+
+    .result-card .unit {
+      color: #475569;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .integration-list {
+      display: grid;
+      gap: 6px;
+      color: var(--accent);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .integration-list div {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .integration-list span {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .integration-list strong {
+      color: var(--accent);
+      font-weight: 780;
+      text-align: right;
+    }
+
+    .result-card .note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .comparison-table-wrap {
+      padding: 18px 20px 22px;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 13px;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: center;
+      vertical-align: middle;
+      white-space: normal;
+      word-break: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .comparison-table th:first-child,
+    .comparison-table td:first-child {
+      width: 19%;
+      text-align: left;
+      color: #334155;
+      font-weight: 760;
+    }
+
+    .comparison-table th {
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.25;
+    }
+
+    .comparison-table td {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.25;
+    }
+
+    .comparison-table th:first-child {
+      border-top-left-radius: 6px;
+    }
+
+    .comparison-table th:last-child {
+      border-top-right-radius: 6px;
+    }
+
+    .comparison-table tbody tr:nth-child(even) td {
+      background: var(--panel-soft);
+    }
+
+    .comparison-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .chart {
+      padding: 20px 22px 22px;
+    }
+
+    .chart-area {
+      display: grid;
+      align-items: end;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      height: 260px;
+      padding: 20px 12px 0;
+      border-left: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(to top, rgba(219, 227, 238, 0.72) 1px, transparent 1px) 0 0 / 100% 25%;
+    }
+
+    .bar-group {
+      display: grid;
+      align-content: end;
+      justify-items: center;
+      height: 100%;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .bar-value {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .bar {
+      width: min(58px, 68%);
+      min-height: 6px;
+      border-radius: 6px 6px 0 0;
+      background: var(--accent-mid);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    }
+
+    .bar.direct {
+      background: #163d73;
+    }
+
+    .bar.indirect {
+      background: #3f6fa8;
+    }
+
+    .bar.pin {
+      background: #12726b;
+    }
+
+    .bar-label {
+      min-height: 20px;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .footer-note {
+      margin: 18px 2px 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 940px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(100% - 24px, 1180px);
+        padding-top: 18px;
+      }
+
+      .header {
+        display: block;
+        padding: 22px;
+      }
+
+      .badge {
+        display: inline-block;
+        margin-top: 18px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .result-card {
+        min-height: 108px;
+      }
+
+      .comparison-table {
+        font-size: 12px;
+      }
+
+      .comparison-table th,
+      .comparison-table td {
+        padding: 9px 7px;
+      }
+
+      .chart-area {
+        height: 230px;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div>
+        <h1>X-ray Sensor Parameter Calculator</h1>
+        <p>Web dashboard for X-ray NDT sensor parameter estimation</p>
+      </div>
+      <div class="badge">NDT Sensor Tool</div>
+    </header>
+
+    <section class="dashboard-grid" aria-label="Calculator dashboard">
+      <aside class="panel input-panel">
+        <div class="panel-header">
+          <h2>Input Parameters</h2>
+          <span>Setup</span>
+        </div>
+
+        <form class="form-grid" id="parameterForm">
+          <div class="field">
+            <label for="tubeVoltage">Tube Voltage (kV)</label>
+            <input id="tubeVoltage" type="number" min="40" step="0.1" value="70" />
+            <p class="warning" id="tubeVoltageWarning">
+              Tube voltage below 40 kV is outside the calibrated range. The calculation uses 40 kV as the lower limit.
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="power">Power (W)</label>
+            <input id="power" type="number" min="0" step="0.1" value="6.5" />
+          </div>
+
+          <div class="field">
+            <label for="verticalDistance">Vertical Distance (cm)</label>
+            <input id="verticalDistance" type="number" min="0" step="0.1" value="7.5" />
+          </div>
+
+          <div class="field">
+            <label for="horizontalDistance">Horizontal Distance (cm)</label>
+            <input id="horizontalDistance" type="number" min="0" step="0.1" value="0" />
+          </div>
+
+          <div class="field">
+            <label for="penetrationObject">Penetration Object</label>
+            <select id="penetrationObject">
+              <option selected>PCB</option>
+              <option>Glass</option>
+              <option>Power bank</option>
+              <option>None</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="pixelPitch">Pixel Pitch (um)</label>
+            <input id="pixelPitch" type="number" min="0" step="0.1" value="48" />
+          </div>
+
+          <div class="field">
+            <label for="scintillator">Scintillator</label>
+            <select id="scintillator">
+              <option>GOS(A)</option>
+              <option>GOS(B)</option>
+              <option selected>CsI(C)</option>
+              <option>GOS(D)</option>
+            </select>
+          </div>
+        </form>
+      </aside>
+
+      <section class="panel result-panel">
+        <div class="panel-header">
+          <h2>Result Summary</h2>
+          <span>Calculated values</span>
+        </div>
+
+        <div class="cards">
+          <article class="result-card">
+            <p class="label">SID</p>
+            <div class="value"><span id="sidValue">0.00</span><span class="unit">cm</span></div>
+            <div class="note">Source-to-image distance</div>
+          </article>
+
+          <article class="result-card">
+            <p class="label">Tube Current</p>
+            <div class="value"><span id="tubeCurrentValue">0.00</span><span class="unit">mA</span></div>
+            <div class="note">Estimated from power and voltage</div>
+          </article>
+
+          <article class="result-card">
+            <p class="label">Transmittance</p>
+            <div class="value"><span id="transmittanceValue">0.00</span><span class="unit">%</span></div>
+            <div class="note">Placeholder material attenuation</div>
+          </article>
+
+          <article class="result-card">
+            <p class="label">Dose Rate after object</p>
+            <div class="value"><span id="doseRateValue">0.00</span><span class="unit">mGy/s</span></div>
+            <div class="note">After penetration object<br />Before object: <span id="doseRateBeforeValue">0.00</span> mGy/s</div>
+          </article>
+
+          <article class="result-card">
+            <p class="label">Light Intensity</p>
+            <div class="value"><span id="lightIntensityValue">0.00</span><span class="unit">Lux</span></div>
+            <div class="note">Calculated from scintillator-specific calibration</div>
+          </article>
+
+          <article class="result-card">
+            <p class="label">Integration Time Range</p>
+            <div class="integration-list">
+              <div><span>UW</span><strong id="uwIntegrationSummary">--</strong></div>
+              <div><span>NCKU</span><strong id="nckuIntegrationSummary">--</strong></div>
+              <div><span>Indirect</span><strong id="indirectIntegrationSummary">--</strong></div>
+              <div><span>PIN</span><strong id="pinIntegrationSummary">--</strong></div>
+            </div>
+            <div class="note">Calculated from AFE charge range and photocurrent</div>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <section class="bottom-grid">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Device Comparison</h2>
+          <span>Sensor metrics</span>
+        </div>
+
+        <div class="comparison-table-wrap">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Direct TFT - UW</th>
+                <th>Direct TFT - NCKU</th>
+                <th>Indirect TFT</th>
+                <th>PIN Photodiode</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Dark Current</td>
+                <td id="uwDark">--</td>
+                <td id="nckuDark">--</td>
+                <td id="indirectDark">--</td>
+                <td id="pinDark">--</td>
+              </tr>
+              <tr>
+                <td>Photocurrent</td>
+                <td id="uwPhoto">--</td>
+                <td id="nckuPhoto">--</td>
+                <td id="indirectPhoto">--</td>
+                <td id="pinPhoto">--</td>
+              </tr>
+              <tr>
+                <td>Dose-to-current Efficiency</td>
+                <td id="uwEfficiency">--</td>
+                <td id="nckuEfficiency">--</td>
+                <td id="indirectEfficiency">--</td>
+                <td id="pinEfficiency">--</td>
+              </tr>
+              <tr>
+                <td>Integration Time</td>
+                <td id="uwIntegration">--</td>
+                <td id="nckuIntegration">--</td>
+                <td id="indirectIntegration">--</td>
+                <td id="pinIntegration">--</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Photocurrent Comparison</h2>
+          <span>Bar chart</span>
+        </div>
+
+        <div class="chart">
+          <div class="chart-area" aria-label="Photocurrent bar chart">
+            <div class="bar-group">
+              <div class="bar-value" id="uwBarValue">0.00 nA</div>
+              <div class="bar direct" id="uwBar"></div>
+              <div class="bar-label">UW Direct</div>
+            </div>
+            <div class="bar-group">
+              <div class="bar-value" id="nckuBarValue">0.00 nA</div>
+              <div class="bar direct" id="nckuBar"></div>
+              <div class="bar-label">NCKU Direct</div>
+            </div>
+            <div class="bar-group">
+              <div class="bar-value" id="indirectBarValue">0.00 nA</div>
+              <div class="bar indirect" id="indirectBar"></div>
+              <div class="bar-label">Indirect TFT</div>
+            </div>
+            <div class="bar-group">
+              <div class="bar-value" id="pinBarValue">0.00 nA</div>
+              <div class="bar pin" id="pinBar"></div>
+              <div class="bar-label">PIN</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <p class="footer-note">
+      Calculated results are based on the Excel-derived experimental calibration model.
+    </p>
+  </main>
+
+  <script>
+    const inputs = {
+      tubeVoltage: document.getElementById("tubeVoltage"),
+      power: document.getElementById("power"),
+      verticalDistance: document.getElementById("verticalDistance"),
+      horizontalDistance: document.getElementById("horizontalDistance"),
+      penetrationObject: document.getElementById("penetrationObject"),
+      pixelPitch: document.getElementById("pixelPitch"),
+      scintillator: document.getElementById("scintillator")
+    };
+
+    const output = {
+      sid: document.getElementById("sidValue"),
+      tubeCurrent: document.getElementById("tubeCurrentValue"),
+      transmittance: document.getElementById("transmittanceValue"),
+      doseRate: document.getElementById("doseRateValue"),
+      doseRateBefore: document.getElementById("doseRateBeforeValue"),
+      lightIntensity: document.getElementById("lightIntensityValue"),
+      tubeVoltageWarning: document.getElementById("tubeVoltageWarning"),
+      uwIntegrationSummary: document.getElementById("uwIntegrationSummary"),
+      nckuIntegrationSummary: document.getElementById("nckuIntegrationSummary"),
+      indirectIntegrationSummary: document.getElementById("indirectIntegrationSummary"),
+      pinIntegrationSummary: document.getElementById("pinIntegrationSummary"),
+      uwDark: document.getElementById("uwDark"),
+      nckuDark: document.getElementById("nckuDark"),
+      indirectDark: document.getElementById("indirectDark"),
+      pinDark: document.getElementById("pinDark"),
+      uwPhoto: document.getElementById("uwPhoto"),
+      nckuPhoto: document.getElementById("nckuPhoto"),
+      indirectPhoto: document.getElementById("indirectPhoto"),
+      pinPhoto: document.getElementById("pinPhoto"),
+      uwEfficiency: document.getElementById("uwEfficiency"),
+      nckuEfficiency: document.getElementById("nckuEfficiency"),
+      indirectEfficiency: document.getElementById("indirectEfficiency"),
+      pinEfficiency: document.getElementById("pinEfficiency"),
+      uwIntegration: document.getElementById("uwIntegration"),
+      nckuIntegration: document.getElementById("nckuIntegration"),
+      indirectIntegration: document.getElementById("indirectIntegration"),
+      pinIntegration: document.getElementById("pinIntegration"),
+      uwBar: document.getElementById("uwBar"),
+      nckuBar: document.getElementById("nckuBar"),
+      indirectBar: document.getElementById("indirectBar"),
+      pinBar: document.getElementById("pinBar"),
+      uwBarValue: document.getElementById("uwBarValue"),
+      nckuBarValue: document.getElementById("nckuBarValue"),
+      indirectBarValue: document.getElementById("indirectBarValue"),
+      pinBarValue: document.getElementById("pinBarValue")
+    };
+
+    const AFE_Q_MIN_PC = 0.6;
+    const AFE_Q_MAX_PC = 9.6;
+
+    function getNumber(input) {
+      return Number.parseFloat(input.value) || 0;
+    }
+
+    function format(value, digits = 2) {
+      return Number.isFinite(value) ? value.toFixed(digits) : "0.00";
+    }
+
+    function formatNullable(value, digits = 2) {
+      return Number.isFinite(value) ? value.toFixed(digits) : "--";
+    }
+
+    function formatCurrentNA(value) {
+      if (!Number.isFinite(value)) return "--";
+
+      const absValue = Math.abs(value);
+
+      if (absValue > 0 && absValue < 0.01) {
+        return value.toFixed(4);
+      }
+
+      if (absValue < 1) {
+        return value.toFixed(3);
+      }
+
+      return value.toFixed(2);
+    }
+
+    function formatTimeMs(value) {
+      if (!Number.isFinite(value)) return "--";
+
+      if (value < 0.01) {
+        return value.toFixed(4);
+      }
+
+      if (value < 1) {
+        return value.toFixed(3);
+      }
+
+      if (value < 100) {
+        return value.toFixed(2);
+      }
+
+      return value.toFixed(1);
+    }
+
+    function formatRange(range) {
+      return range ? `${formatTimeMs(range.min)} - ${formatTimeMs(range.max)}` : "--";
+    }
+
+    function formatRangeMs(range) {
+      return range ? `${formatRange(range)} ms` : "--";
+    }
+
+    function calculateIntegrationRange(photocurrent) {
+      if (!Number.isFinite(photocurrent) || photocurrent <= 0) {
+        return null;
+      }
+
+      return {
+        min: AFE_Q_MIN_PC / photocurrent,
+        max: AFE_Q_MAX_PC / photocurrent
+      };
+    }
+
+    function calculateTransmittance(objectName, tubeVoltage) {
+      let t = 1;
+
+      if (objectName === "PCB") {
+        t = tubeVoltage <= 40
+          ? 0.0038979289941 * tubeVoltage
+          : 0.393938056 * Math.log(tubeVoltage) - 1.2972728412;
+      } else if (objectName === "Glass") {
+        t = tubeVoltage <= 40
+          ? 0.0071449704142 * tubeVoltage
+          : 0.36269589711 * Math.log(tubeVoltage) - 1.0521426264;
+      } else if (objectName === "Power bank") {
+        t = tubeVoltage <= 40
+          ? 0.00015532544379 * tubeVoltage
+          : 0.20689462688 * Math.log(tubeVoltage) - 0.75699632052;
+      } else {
+        t = 1;
+      }
+
+      return Math.min(1, Math.max(0, t));
+    }
+
+    function calculateDoseRateBeforeObject(tubeVoltage, tubeCurrent, sid) {
+      // Excel-derived dose rate calibration model.
+      // Inputs:
+      // - tubeVoltage: kV
+      // - tubeCurrent: mA
+      // - sid: cm
+      // Output:
+      // - dose rate before penetration object, in mGy/s
+
+      if (sid <= 0 || tubeCurrent <= 0) return 0;
+
+      const baseOutput = 0.5793 * tubeVoltage - 12.693;
+      const distanceCorrection = (7 / sid) ** 2;
+
+      return Math.max(0, baseOutput * tubeCurrent * distanceCorrection);
+    }
+
+    function calculateLightIntensity(scintillator, tubeVoltage, tubeCurrent, transmittance, sid) {
+      // Excel-derived scintillator light intensity calibration.
+      // Inputs:
+      // - scintillator: selected scintillator name
+      // - tubeVoltage: kV
+      // - tubeCurrent: mA
+      // - transmittance: unitless ratio, 0 to 1
+      // - sid: cm
+      // Output:
+      // - light intensity in Lux
+
+      if (sid <= 0 || tubeCurrent <= 0) return 0;
+
+      let coefficient = 0;
+
+      if (scintillator === "GOS(A)") {
+        coefficient = 0.0084 * tubeVoltage - 0.2561;
+      } else if (scintillator === "GOS(B)") {
+        coefficient = 0.0084 * tubeVoltage - 0.2434;
+      } else if (scintillator === "CsI(C)") {
+        coefficient = 0.0068 * tubeVoltage - 0.2099;
+      } else if (scintillator === "GOS(D)") {
+        coefficient = 0.0080 * tubeVoltage - 0.2467;
+      } else {
+        return 0;
+      }
+
+      const tubeCurrentUA = tubeCurrent * 1000;
+      const distanceCorrection = (7 / sid) ** 2;
+
+      return Math.max(0, coefficient * tubeCurrentUA * transmittance * distanceCorrection);
+    }
+
+    function calculateDoseRateDataB2(tubeVoltage) {
+      if (tubeVoltage <= 50) {
+        return (5.555555555556e-11 * tubeVoltage) + 1.555555555556e-8;
+      }
+
+      if (tubeVoltage <= 70) {
+        return 1.307921630211e-15 * Math.exp(0.331506177119 * tubeVoltage);
+      }
+
+      return (0.00000125 * tubeVoltage ** 2)
+        + (-0.000175 * tubeVoltage)
+        + 0.006140652112578;
+    }
+
+    function calculateEfficiency(photocurrent, doseRateAfterObject) {
+      if (!Number.isFinite(photocurrent) || !Number.isFinite(doseRateAfterObject) || doseRateAfterObject <= 0) {
+        return null;
+      }
+
+      return photocurrent / doseRateAfterObject;
+    }
+
+    function calculateUWDirectSensor(tubeVoltage, pixelPitch, doseRateBeforeObject, doseRateAfterObject) {
+      const doseRateDataB2 = calculateDoseRateDataB2(tubeVoltage);
+      const pixelScale = (pixelPitch / 32) ** 2;
+
+      const darkCurrent = ((0.00000000006 * doseRateDataB2) + 0.00000000002) * 1000000000 * pixelScale;
+      // Excel-derived UW photocurrent formula.
+      // Use doseRateAfterObject because the Excel referenced dose rate already includes transmittance.
+      const photocurrent = ((doseRateAfterObject * 0.6506) + 2.0438) * pixelScale;
+      const efficiency = calculateEfficiency(photocurrent, doseRateAfterObject);
+
+      return {
+        darkCurrent,
+        photocurrent,
+        efficiency
+      };
+    }
+
+    function calculateNCKUDirectSensor(tubeVoltage, pixelPitch, doseRateBeforeObject, doseRateAfterObject) {
+      const doseRateDataB2 = calculateDoseRateDataB2(tubeVoltage);
+      const pixelScale = (pixelPitch / 32) ** 2;
+
+      const darkCurrent = ((0.00000000006 * doseRateDataB2) + 0.00000000002) * 1000000000 * pixelScale;
+      // Excel-derived NCKU photocurrent formula.
+      // Use doseRateAfterObject to match the verified Excel efficiency.
+      const photocurrent = ((doseRateAfterObject * 0.1996) + 0.1134) * pixelScale;
+      const efficiency = calculateEfficiency(photocurrent, doseRateAfterObject);
+
+      return {
+        darkCurrent,
+        photocurrent,
+        efficiency
+      };
+    }
+
+    function calculateIndirectGapTFTSensor(lightIntensity, pixelPitch, doseRateAfterObject) {
+      const pixelScale = (pixelPitch / 32) ** 2;
+
+      const darkCurrent = 0.015375767;
+      const photocurrent = lightIntensity > 0
+        ? 0.4 * 0.2692 * (lightIntensity ** 0.6988) * pixelScale
+        : 0;
+      const efficiency = calculateEfficiency(photocurrent, doseRateAfterObject);
+
+      return {
+        darkCurrent,
+        photocurrent,
+        efficiency
+      };
+    }
+
+    function calculatePINSensor(lightIntensity, pixelPitch, doseRateAfterObject) {
+      const pixelScale = (pixelPitch / 154) ** 2;
+
+      const darkCurrent = null;
+      const photocurrent = ((0.000000002 * lightIntensity) + 0.000000003) / 600 * 1000000000 * pixelScale;
+      const efficiency = calculateEfficiency(photocurrent, doseRateAfterObject);
+
+      return {
+        darkCurrent,
+        photocurrent,
+        efficiency
+      };
+    }
+
+    function calculate() {
+      const enteredTubeVoltage = getNumber(inputs.tubeVoltage);
+      const tubeVoltage = Math.max(40, enteredTubeVoltage);
+      const power = getNumber(inputs.power);
+      const verticalDistance = getNumber(inputs.verticalDistance);
+      const horizontalDistance = getNumber(inputs.horizontalDistance);
+      const pixelPitch = getNumber(inputs.pixelPitch);
+      const penetrationObject = inputs.penetrationObject.value;
+      const scintillator = inputs.scintillator.value;
+
+      output.tubeVoltageWarning.classList.toggle("is-visible", enteredTubeVoltage < 40);
+
+      // TODO: Replace this SID calculation with the corresponding Excel formula.
+      const sid = Math.sqrt((verticalDistance ** 2) + (horizontalDistance ** 2));
+
+      const tubeCurrent = tubeVoltage > 0 ? power / tubeVoltage : 0;
+
+      const transmittance = calculateTransmittance(penetrationObject, tubeVoltage);
+
+      const doseRateBeforeObject = calculateDoseRateBeforeObject(tubeVoltage, tubeCurrent, sid);
+      const doseRateAfterObject = doseRateBeforeObject * transmittance;
+
+      const lightIntensity = calculateLightIntensity(
+        scintillator,
+        tubeVoltage,
+        tubeCurrent,
+        transmittance,
+        sid
+      );
+
+      const uwSensor = calculateUWDirectSensor(
+        tubeVoltage,
+        pixelPitch,
+        doseRateBeforeObject,
+        doseRateAfterObject
+      );
+
+      const nckuSensor = calculateNCKUDirectSensor(
+        tubeVoltage,
+        pixelPitch,
+        doseRateBeforeObject,
+        doseRateAfterObject
+      );
+
+      const indirectSensor = calculateIndirectGapTFTSensor(
+        lightIntensity,
+        pixelPitch,
+        doseRateAfterObject
+      );
+
+      const pinSensor = calculatePINSensor(
+        lightIntensity,
+        pixelPitch,
+        doseRateAfterObject
+      );
+
+      const uwIntegrationRange = calculateIntegrationRange(uwSensor.photocurrent);
+      const nckuIntegrationRange = calculateIntegrationRange(nckuSensor.photocurrent);
+      const indirectIntegrationRange = calculateIntegrationRange(indirectSensor.photocurrent);
+      const pinIntegrationRange = calculateIntegrationRange(pinSensor.photocurrent);
+
+      output.sid.textContent = format(sid);
+      output.tubeCurrent.textContent = format(tubeCurrent, 4);
+      output.transmittance.textContent = format(transmittance * 100, 1);
+      output.doseRate.textContent = format(doseRateAfterObject);
+      output.doseRateBefore.textContent = format(doseRateBeforeObject);
+      output.lightIntensity.textContent = format(lightIntensity);
+
+      output.uwIntegrationSummary.textContent = formatRangeMs(uwIntegrationRange);
+      output.nckuIntegrationSummary.textContent = formatRangeMs(nckuIntegrationRange);
+      output.indirectIntegrationSummary.textContent = formatRangeMs(indirectIntegrationRange);
+      output.pinIntegrationSummary.textContent = formatRangeMs(pinIntegrationRange);
+
+      output.uwDark.textContent = `${format(uwSensor.darkCurrent, 4)} nA`;
+      output.nckuDark.textContent = `${format(nckuSensor.darkCurrent, 4)} nA`;
+      output.indirectDark.textContent = `${format(indirectSensor.darkCurrent, 4)} nA`;
+      output.pinDark.textContent = "--";
+
+      output.uwPhoto.textContent = `${formatCurrentNA(uwSensor.photocurrent)} nA`;
+      output.nckuPhoto.textContent = `${formatCurrentNA(nckuSensor.photocurrent)} nA`;
+      output.indirectPhoto.textContent = `${formatCurrentNA(indirectSensor.photocurrent)} nA`;
+      output.pinPhoto.textContent = `${formatCurrentNA(pinSensor.photocurrent)} nA`;
+
+      output.uwEfficiency.textContent = `${formatNullable(uwSensor.efficiency)} nA/(mGy/s)`;
+      output.nckuEfficiency.textContent = `${formatNullable(nckuSensor.efficiency)} nA/(mGy/s)`;
+      output.indirectEfficiency.textContent = `${formatNullable(indirectSensor.efficiency)} nA/(mGy/s)`;
+      output.pinEfficiency.textContent = `${formatNullable(pinSensor.efficiency, 4)} nA/(mGy/s)`;
+
+      output.uwIntegration.textContent = formatRangeMs(uwIntegrationRange);
+      output.nckuIntegration.textContent = formatRangeMs(nckuIntegrationRange);
+      output.indirectIntegration.textContent = formatRangeMs(indirectIntegrationRange);
+      output.pinIntegration.textContent = formatRangeMs(pinIntegrationRange);
+
+      updateBarChart([
+        uwSensor.photocurrent,
+        nckuSensor.photocurrent,
+        indirectSensor.photocurrent,
+        pinSensor.photocurrent
+      ]);
+    }
+
+    function updateBarChart(values) {
+      const maxValue = Math.max(...values, 1);
+      const bars = [output.uwBar, output.nckuBar, output.indirectBar, output.pinBar];
+      const labels = [output.uwBarValue, output.nckuBarValue, output.indirectBarValue, output.pinBarValue];
+
+      values.forEach((value, index) => {
+        const height = Math.max(6, (value / maxValue) * 190);
+        bars[index].style.height = `${height}px`;
+        labels[index].textContent = `${formatCurrentNA(value)} nA`;
+      });
+    }
+
+    Object.values(inputs).forEach((input) => {
+      input.addEventListener("input", calculate);
+      input.addEventListener("change", calculate);
+    });
+
+    calculate();
+  </script>
+</body>
+</html>
