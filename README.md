@@ -14,3 +14,5 @@ The dashboard calculates:
 - Integration time range
 
 Calculated results are based on Excel-derived experimental calibration models.
+
+Maintained for DADS lab internal research and demonstration use.
